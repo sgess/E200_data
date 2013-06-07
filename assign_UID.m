@@ -35,10 +35,10 @@ end
 step = unique(EPICS_SCANSTEP);
 EPICS_SHOT = [];
 for i = 1:length(step)
-    EPICS_SHOT = [EPICS_SHOT; (1:sum(EPICS_SCANSTEP == step(i)))'];
+    EPICS_SHOT = [EPICS_SHOT (1:sum(EPICS_SCANSTEP == step(i)))];
 end
 % Create UID from dataset, scan step, and shot number
-epics_UID = 1e8*EPICS_DATASET+1e4*EPICS_SCANSTEP+EPICS_SHOT';
+epics_UID = 1e8*EPICS_DATASET+1e4*EPICS_SCANSTEP+EPICS_SHOT;
 out.epics_UID=epics_UID;
 
 % Assign UID to image data
@@ -69,10 +69,10 @@ if exist('IMAGE_PID')
             end
             [discard,discard,ib_lo] = intersect(iid_lo,EPID);
             [discard,discard,ib_hi] = intersect(iid_hi,EPID);
-            ib = [ib_lo', ib_hi'];
-        end        
+            ib = [ib_lo ib_hi];
+        end
         % assign image UID
-        image_UID = [image_UID; EUID(ib)];
+        image_UID = [image_UID EUID(ib)];
     end
     out.image_UID=image_UID;
 end

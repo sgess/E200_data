@@ -127,13 +127,18 @@ function data=E200_gather_data(pathstr,varargin)
 		% Put in epics_data
 		names=fieldnames(epics_data);
 		for i=1:size(names,1)
-			data.raw.scalars.(names{i})=add_raw(epics_data_mat(i,:),e_UID,'EPICS');
+			data.raw.scalars.(names{i})=add_raw(epics_data_mat(i,:),e_UID,e_PID,'EPICS');
 		end
 
 		% Save these things to the struct
-		data.raw.scalars.step_num       = add_raw(e_scan_step,e_UID,'EPICS');
-		data.raw.scalars.set_num = add_raw(e_dataset, e_UID, 'EPICS');
+		data.raw.scalars.step_num       = add_raw(e_scan_step,e_UID,e_PID,'EPICS');
+		data.raw.scalars.set_num = add_raw(e_dataset, e_UID, e_PID, 'EPICS');
 
+        % add AIDA data
+        if param.aida_daq
+            data = add_aida(data,aida_data,options);
+        end
+        
 		% Extract and save backgrounds if they exist(consistency)
 		if isstruct(cam_back)
 			% Save backgrounds to file
@@ -171,6 +176,7 @@ function data=E200_gather_data(pathstr,varargin)
 							'isfile'		, ones(1,n_i_shots), ...
 							'bin_index'		, [1:n_i_shots], ...
 							'UID'			, i_UID, ...
+                            'PID'           , i_PID', ...
 							'IDtype'		, 'Image');
 			% Add the remaining info from cam_back
 			if isstruct(cam_back)
@@ -193,7 +199,7 @@ function data=E200_gather_data(pathstr,varargin)
 
 
 		% Add metadata
-		data.raw.metadata.param=add_raw(cell_construct(param,1,n_e_shots), e_UID,'EPICS');
+		data.raw.metadata.param=add_raw(cell_construct(param,1,n_e_shots), e_UID, e_PID, 'EPICS');
 	        
 	    case 'none'
 		    error('Filetype not understood.');
@@ -213,7 +219,13 @@ end
 
 function data=add_scan_info(data,scan_info)
 	UID=data.raw.scalars.step_num.UID;
+    PID=data.raw.scalars.step_num.PID;
 	size_UID = size(UID,2);
-	data=add_step_info(data,scan_info.Control_PV_name{1},scan_info.Control_PV);
-	data.raw.metadata.scan_info=add_raw(cell_construct(scan_info,1,size_UID),UID,'EPICS');
+    if iscell(scan_info(1).Control_PV_name)
+        Control_PV_name = scan_info(1).Control_PV_name;
+    else
+        Control_PV_name = {scan_info(1).Control_PV_name};
+    end
+	data=add_step_info(data,Control_PV_name,scan_info.Control_PV);
+	data.raw.metadata.scan_info=add_raw(cell_construct(scan_info,1,size_UID),UID,PID,'EPICS');
 end
